@@ -409,7 +409,7 @@ var Roux =
 
     // redirect check
     if (typeof nRule.redirect == "function") {
-      var result = nRule.redirect(self.currentParams);
+      var result = nRule.redirect(self.currentParams, self.cbarg);
       if (result === false || result === undefined) {
         // no redirection
       }

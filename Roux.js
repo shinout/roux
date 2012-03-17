@@ -137,7 +137,14 @@ var Roux =
     // root name
     if (typeof options.rootName == 'string') self.rootName = options.rootName;
 
-    var currentPath = rawPath.split(self.basePath)[1] || '/';
+    var idx = rawPath.indexOf(self.basePath);
+    if (self.basePath == "/") {
+      var currentPath = rawPath;
+    }
+    else {
+      var currentPath = (idx == -1) ? "/" : rawPath.slice(idx+self.basePath.length);
+    }
+
     De&&bug("first currentPath", currentPath);
 
     // node names

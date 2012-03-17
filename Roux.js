@@ -137,7 +137,8 @@ var Roux =
     // root name
     if (typeof options.rootName == 'string') self.rootName = options.rootName;
 
-    var currentPath = rawPath.split(self.basePath)[1];
+    var currentPath = rawPath.split(self.basePath)[1] || '/';
+    De&&bug("first currentPath", currentPath);
 
     // node names
     Methods.updateNodeNames(currentPath);

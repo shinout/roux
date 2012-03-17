@@ -17,6 +17,8 @@ var Roux =
   var Methods  = {}; // private methods
   var Utils    = {}; // utility functions
 
+  var beforeInits = [];
+
   var self = {       // states (private properties) of this singleton object
     basePath        : '/',         // root dir
     viewPath        : '/views',    // resource root
@@ -150,13 +152,6 @@ var Roux =
       path   : self.currentPath
     };
 
-    // // save this state
-    // history.pushState(
-    //   self.defaultState,
-    //   null, // title
-    //   location.href
-    // );
-
     // on domready
     var $body = $("body");
 
@@ -193,7 +188,16 @@ var Roux =
       Publics.moveTo(page.path, page.params, {backward: true});
     }
 
+
     self.initialized = true;
+
+    De&&bug("beforeInits", beforeInits);
+
+    beforeInits.forEach(function(args) {
+      De&&bug("execute Roux.set() and Roux.moveTo() called before initialization");
+      var method = args.shift();
+      Publics[method].apply(Publics, args);
+    });
   };
 
 
@@ -286,6 +290,11 @@ var Roux =
    * set distinations
    **/
   Publics.set = function(path, obj) {
+    if (!self.initialized) {
+      // De&&bug("Roux.set() : pushing to beforeInits", path);
+      beforeInits.push(["set", path, obj]);
+      return;
+    }
     Utils.assert(self.initialized, 
       'first you have to initialize Roux with Roux.init() before Roux.set()');
     Utils.assert(typeof path == 'string');
@@ -499,7 +508,7 @@ var Roux =
       umecob({
         name   : "roux",
         tpl_id : htmlURL,
-        data   : getter ? getter(self.currentParams) : null,
+        data   : getter ? getter(self.currentParams, self.cbarg) : null,
         attach : dataToTpl
       })
       .next(function(html) {

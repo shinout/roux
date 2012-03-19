@@ -369,11 +369,11 @@ var Roux =
     self.rouxes[self.currentIdx] = $roux;
 
     var trans = options.trans;
+    var rule = self.getRule();
 
     // if getContents is not called from moveTo, visit event occurs.
     De&&bug("options.fromMoveTo", options.fromMoveTo);
     if (!options.fromMoveTo) {
-      var rule = self.getRule();
       if (rule.load && !rule._loaded) {
         rule.load(self.currentParams, self.cbarg);
         rule._loaded = true;

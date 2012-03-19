@@ -413,6 +413,7 @@ var Roux =
       else {
         self.currentPath = Utils.normalizePath(self.currentPath + "/" + rule._default);
         Methods.updateNodeNames(self.currentPath);
+        nextName = rule._default;
       }
     }
     var nRule = self.getRuleByIdx(self.currentIdx+1); // get next rule

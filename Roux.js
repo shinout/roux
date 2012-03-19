@@ -441,7 +441,8 @@ var Roux =
     var dataToTpl = {
       rouxId: rouxId,
       sel: '#' + rouxId,
-      params: self.currentParams
+      params: self.currentParams,
+      tpls : {}
     };
 
     var htmlURL = self.getResourceURL("html", nRule.html, self.viewPath);
@@ -473,7 +474,7 @@ var Roux =
         var tplURL = nRule.partials[name];
 
         if (self.gotResources[tplURL]) {
-          dataToTpl[name]  = self.gotResources[tplURL];
+          dataToTpl.tpls[name]  = self.gotResources[tplURL];
           if (--count == 0) setTimeout(function() { $d.call() }, 0);
         }
 
@@ -485,10 +486,10 @@ var Roux =
             if (--count == 0) $d.call();
           },
           success : function(tpl, type, xhr) {
-            dataToTpl[name]  = tpl;
+            dataToTpl.tpls[name]  = tpl;
             self.gotResources[tplURL]  = tpl;
             if (--count == 0) $d.call();
-            De&&bug("template(" + tplURL +")", tpl)
+            // De&&bug("template(" + tplURL +")", tpl)
           }
         });
       });

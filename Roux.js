@@ -11,7 +11,6 @@ var Roux =
     args.forEach(function(arg) { console.log(name, arg) });
   };
 
-  De && setInterval(function(){ console.log(".") }, 2000);
   var Deferred = umecob.Umecob.Deferred;
   var Publics  = {}; // public methods
   var Methods  = {}; // private methods
@@ -107,6 +106,7 @@ var Roux =
     var rawPath = location.pathname;
     options || (options = {});
     De = options.debug;
+    De && setInterval(function(){ console.log(".") }, 2000);
 
     umecob.use({compiler: 'jsp', binding: 'jquery'});
 

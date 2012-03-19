@@ -324,6 +324,10 @@ var Roux =
       if (typeof obj[name] == "string") rule[name] = obj[name];
     });
 
+    if (typeof obj._default == "string") {
+      rule._default = (obj._default.charAt(0) == "/") ? obj._default.slice(1) : obj._default;
+    }
+
     ['partials'].forEach(function(name) {
       if (typeof obj[name] == "object") rule[name] = obj[name];
     });
@@ -400,10 +404,16 @@ var Roux =
 
     // if no nextname, show and end getting contents.
     if (!nextName) {
-      var defaultHTML = defaultContents[self.currentIdx];
-      if (defaultHTML) $roux.html(defaultHTML);
-      De&&bug("NO NEXT NAME");
-      return Methods.show(trans);
+      if (!rule._default) {
+        var defaultHTML = defaultContents[self.currentIdx];
+        if (defaultHTML) $roux.html(defaultHTML);
+        De&&bug("NO NEXT NAME");
+        return Methods.show(trans);
+      }
+      else {
+        self.currentPath = self.currentPath + "/" + rule._default;
+        Methods.updateNodeNames(self.currentPath);
+      }
     }
     var nRule = self.getRuleByIdx(self.currentIdx+1); // get next rule
 

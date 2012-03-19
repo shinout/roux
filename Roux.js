@@ -411,7 +411,7 @@ var Roux =
         return Methods.show(trans);
       }
       else {
-        self.currentPath = self.currentPath + "/" + rule._default;
+        self.currentPath = Utils.normalizePath(self.currentPath + "/" + rule._default);
         Methods.updateNodeNames(self.currentPath);
       }
     }

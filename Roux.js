@@ -178,6 +178,7 @@ var Roux =
 
       De&&bug("init => getContents");
       Methods.getContents($(self.selector));
+      // Methods.getContents($(self.selector), {data: xxx});
     };
 
     if ($d && $d.next) $d.next(afterPrepared);
@@ -365,7 +366,6 @@ var Roux =
    **/
   Methods.getContents = function($roux, options) {
     options || (options = {});
-    De&&bug("getContents", "path", self.currentPath, "idx", self.currentIdx);
     self.rouxes[self.currentIdx] = $roux;
 
     var trans = options.trans;
@@ -375,11 +375,11 @@ var Roux =
     De&&bug("options.fromMoveTo", options.fromMoveTo);
     if (!options.fromMoveTo) {
       if (rule.load && !rule._loaded) {
-        rule.load(self.currentParams, self.cbarg);
+        rule.load.call({data: options.data, env: self.cbarg}, options.data, self.cbarg);
         rule._loaded = true;
       }
       if (rule.visit) {
-        rule.visit(self.currentParams, self.cbarg);
+        rule.visit.call({data: options.data, env: self.cbarg}, options.data, self.cbarg);
       }
     }
 
@@ -420,7 +420,7 @@ var Roux =
 
     // redirect check
     if (typeof nRule.redirect == "function") {
-      var result = nRule.redirect(self.currentParams, self.cbarg);
+      var result = nRule.redirect.call({env: self.cbarg}, self.currentParams, self.cbarg);
       if (result === false || result === undefined) {
         // no redirection
       }
@@ -528,7 +528,7 @@ var Roux =
       umecob({
         name   : "roux",
         tpl_id : htmlURL,
-        data   : getter ? getter(self.currentParams, self.cbarg) : null,
+        data   : getter ? getter.call({data: dataToTpl, env: self.cbarg}, dataToTpl, self.cbarg) : null,
         attach : dataToTpl
       })
       .next(function(html) {
@@ -536,10 +536,10 @@ var Roux =
         var $sub = $('#' + rouxId + ' ' + self.selector);
         self.currentIdx++;
         De&&bug("get NEXT HTML=> getContents");
-        Methods.getContents($sub);
+        Methods.getContents($sub, {data: dataToTpl});
       })
       .error(function(e) {
-        self.showNotFound("ajax error");
+        self.showNotFound("ajax error", e);
         var path = path = self.nodeNames.slice(1, self.currentIdx+2).join('/');
         De&&bug("delete rule", path,JSON.stringify(self.rules));
         delete self.rules[path];
@@ -549,9 +549,9 @@ var Roux =
     });
   };
 
-  self.showNotFound = function(msg) {
+  self.showNotFound = function(msg, e) {
     self.errorFlag = true;
-    De&&bug(msg);
+    De&&bug(msg, e);
     $("body").html("<h1>404 NOT FOUND " + (De ? "(" + msg +")" : "")).css("visibility", "visible");
   };
 

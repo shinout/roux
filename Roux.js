@@ -524,12 +524,30 @@ var Roux =
 
     // get HTML
     $d.next(function() {
-      var getter = nRule.data;
+      var getter = nRule.data, $data = null;
+      if (getter instanceof Deferred) {
+        $data = getter.call({data: dataToTpl, env: self.cbarg}, dataToTpl, self.cbarg)
+        .next(function(d) {
+          for (var i in d) dataToTpl[i] = d[i];
+          return dataToTpl;
+        });
+      }
+      else {
+        $data = dataToTpl;
+        if (typeof getter == "function") {
+          var _d = getter.call({data: dataToTpl, env: self.cbarg}, dataToTpl, self.cbarg);
+          for (var i in _d) {
+            $data[i] = _d[i];
+          }
+        }
+        else {
+          for (var i in getter) $data[i] = getter[i];
+        }
+      }
       umecob({
         name   : "roux",
         tpl_id : htmlURL,
-        data   : getter ? getter.call({data: dataToTpl, env: self.cbarg}, dataToTpl, self.cbarg) : null,
-        attach : dataToTpl
+        data   : $data
       })
       .next(function(html) {
         $roux.html(Utils.getDivStr(rouxId, html));

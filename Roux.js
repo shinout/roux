@@ -559,9 +559,7 @@ var Roux =
       .error(function(e) {
         self.showNotFound("ajax error", e);
         var path = path = self.nodeNames.slice(1, self.currentIdx+2).join('/');
-        De&&bug("delete rule", path,JSON.stringify(self.rules));
         delete self.rules[path];
-        De&&bug("rule deleted", path,JSON.stringify(self.rules));
         return;
       });
     });
@@ -569,8 +567,8 @@ var Roux =
 
   self.showNotFound = function(msg, e) {
     self.errorFlag = true;
-    De&&bug(msg, e);
-    $("body").html("<h1>404 NOT FOUND " + (De ? "(" + msg +")" : "")).css("visibility", "visible");
+    De&&bug(msg, e.stack);
+    $("body").html("<h1>404 NOT FOUND " + (De ? "(" + msg + "<br>" + e.stack +")" : "")).css("visibility", "visible");
   };
 
 

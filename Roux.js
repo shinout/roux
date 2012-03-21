@@ -69,7 +69,9 @@ var Roux =
       // var nextName = self.getNextName();
       // Utils.assert(nextName);
       name = name || self.nodeNames.slice(1, self.currentIdx+1+1).join('/');
-      return Utils.normalizePath(standardPath + '/' + name + '.' + type);
+      var url = Utils.normalizePath(standardPath + '/' + name + '.' + type);
+      return Utils.addNoCacheParams(De, url);
+      if (De) url += "?" + new Date().getTime().toString();
       // todo path parameter
     },
 
@@ -471,7 +473,7 @@ var Roux =
       var count = partialNames.length;
 
       partialNames.forEach(function(name) {
-        var tplURL = nRule.partials[name];
+        var tplURL = Utils.addNoCacheParams(De, nRule.partials[name]);
 
         if (self.gotResources[tplURL]) {
           dataToTpl.tpls[name]  = self.gotResources[tplURL];
@@ -761,6 +763,11 @@ var Roux =
    **/
   Utils.show = function($el) {
     $el.css("visibility", "visible");
+  };
+
+  Utils.addNoCacheParams = function(debug, url) {
+    if (!debug) return url;
+    return url + "?" + new Date().getTime().toString();
   };
 
   /**

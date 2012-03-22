@@ -103,7 +103,10 @@ var Roux =
    * initialize
    **/
   Publics.init = function(basePath, options, $d) {
-    $(function() { $('body').css("visibility", "hidden") });
+    $(function() {
+      De&&bug("set visibility of body HIDDEN");
+      $('body').css("visibility", "hidden")
+    });
 
     var rawPath = location.pathname;
     options || (options = {});
@@ -166,7 +169,7 @@ var Roux =
     var $body = $("body");
 
     var afterPrepared = function(v) {
-      if (v) self.cbarg = v;
+      if (v) self.cbarg = v[0];
       De&&bug("cbarg", self.cbarg);
 
       $(self.rouxLink).live("click", function(evt) {
@@ -183,7 +186,11 @@ var Roux =
       // Methods.getContents($(self.selector), {data: xxx});
     };
 
-    if ($d && $d.next) $d.next(afterPrepared);
+    if ($d && $d.next) {
+      var $domready = new Deferred();
+      $(function() { $domready.call() });
+      Deferred.parallel([$d, $domready]).next(afterPrepared);
+    }
     else $(afterPrepared);
 
     // on popstate
@@ -358,6 +365,7 @@ var Roux =
     trans($(self.selector));
 
     if (self.firstView) {
+       De&&bug("set visibility of body VISIBLE");
       $('body').css("visibility", "visible");
       self.firstView = false;
     }
@@ -400,6 +408,7 @@ var Roux =
 
     // get div
     var roux  = $roux.get(0);
+    De&&bug("set visibility of roux HIDDEN");
     $roux.css("visibility", "hidden");
 
     var nextName = self.getNextName();
@@ -762,6 +771,7 @@ var Roux =
    * $.show
    **/
   Utils.show = function($el) {
+    De&&bug("set visibility of roux VISIBLE");
     $el.css("visibility", "visible");
   };
 

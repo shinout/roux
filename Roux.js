@@ -3,6 +3,44 @@
  **/
 var Roux =
 (function($, umecob) {
+
+  function RouxScope(data, env, evts) {
+    this.data  = data;
+    this.env   = env;
+    this._evts = evts || {};
+  }
+
+  RouxScope.prototype.emit = function() {
+    var args = Array.prototype.slice.call(arguments);
+    var evtname = args.shift();
+    this._emit(evtname, args, true);
+  };
+
+  RouxScope.prototype.emitSync = function() {
+    var args = Array.prototype.slice.call(arguments);
+    var evtname = args.shift();
+    this._emit(evtname, args);
+  };
+
+  RouxScope.prototype._emit = function(evtname, args, async) {
+    De&&bug("emitting", evtname);
+    var fnlist = this._evts[evtname];
+    if (!Array.isArray(fnlist)) {
+      De&&bug("event is not registered", evtname);
+      return;
+    }
+    if (async) {
+      var self = this;
+      fnlist.forEach(function(fn) {
+        setTimeout(function() { fn.apply(self, args) });
+      });
+    }
+    else {
+      fnlist.forEach(function(fn) { fn.apply(self, args) });
+    }
+  };
+
+
   var De = true;
   var bug = function() {
     var args = Array.prototype.slice.call(arguments);
@@ -36,7 +74,7 @@ var Roux =
     initialized     : false,       // initialized or not
     gotResources    : {},          // already fetched resources 
     errorFlag       : null,        // error flag
-    cbarg           : null,        // value from $d
+    env             : null,        // value from $d
 
     defaultContents : {},          // default contents. querystring => [contents1, contents2...]
     defaultState    : null,        // default state (path, params)
@@ -169,8 +207,8 @@ var Roux =
     var $body = $("body");
 
     var afterPrepared = function(v) {
-      if (v) self.cbarg = v[0];
-      De&&bug("cbarg", self.cbarg);
+      if (v) self.env = v[0];
+      De&&bug("env", self.env);
 
       $(self.rouxLink).live("click", function(evt) {
         De&&bug("rouxLink is clicked");
@@ -182,7 +220,8 @@ var Roux =
       });
 
       De&&bug("init => getContents");
-      Methods.getContents($(self.selector));
+      var rootScope = new RouxScope({}, self.env, {});
+      Methods.getContents($(self.selector), {scope: rootScope});
       // Methods.getContents($(self.selector), {data: xxx});
     };
 
@@ -268,9 +307,12 @@ var Roux =
     for (var i = prevIdx, l = self.currentIdx; i>l; i--) {
       De&&bug("leaving", i);
       // leave event!
-      De&&bug("leaving rule", self.getRuleByIdx(i, prevNodeNames));
-      var leave = self.getRuleByIdx(i, prevNodeNames).leave;
-      if (leave) leave(self.currentParams, self.cbarg);
+      var cRule = self.getRuleByIdx(i, prevNodeNames);
+      De&&bug("leaving rule", cRule);
+      var leave = cRule.leave;
+      if (leave) {
+        leave.call(cRule._scope, self.currentParams);
+      }
     }
 
     // when exactly matched to prev path
@@ -299,7 +341,7 @@ var Roux =
     self.rouxes        = self.rouxes.slice(0, self.currentIdx+1);
     
     De&&bug("moveTo => getContents");
-    Methods.getContents(self.rouxes[self.currentIdx], {fromMoveTo: true});
+    Methods.getContents(self.rouxes[self.currentIdx]);
     return self.currentPath;
   };
 
@@ -328,18 +370,36 @@ var Roux =
     var rule = self.getRule(path);
     ['data', 'redirect', 'load', 'visit', 'leave'].forEach(function(name) {
       if (typeof obj[name] == "function") rule[name] = obj[name];
+      delete obj[name];
     });
 
     ['css', 'html'].forEach(function(name) {
       if (typeof obj[name] == "string") rule[name] = obj[name];
+      delete obj[name];
     });
 
     if (typeof obj._default == "string") {
       rule._default = (obj._default.charAt(0) == "/") ? obj._default.slice(1) : obj._default;
+      delete obj._default;
+    }
+
+    if ("title" in obj) {
+      rule.title = obj.title;
+      delete obj.title;
     }
 
     ['partials'].forEach(function(name) {
       if (typeof obj[name] == "object") rule[name] = obj[name];
+      delete obj[name];
+    });
+
+    // others are events
+    if (!rule._evts) rule._evts = {};
+
+    Object.keys(obj).forEach(function(evtname) {
+      if (typeof obj[evtname] != "function") return;
+      if (!rule._evts[evtname]) rule._evts[evtname] = [];
+      rule._evts[evtname].push(obj[evtname]);
     });
   };
 
@@ -381,15 +441,15 @@ var Roux =
     var trans = options.trans;
     var rule = self.getRule();
 
-    // if getContents is not called from moveTo, visit event occurs.
-    De&&bug("options.fromMoveTo", options.fromMoveTo);
-    if (!options.fromMoveTo) {
+    // if getContents is called from getContents,
+    De&&bug("options.scope", options.scope);
+    if (options.scope) {
       if (rule.load && !rule._loaded) {
-        rule.load.call({data: options.data, env: self.cbarg}, options.data, self.cbarg);
+        rule.load.call(options.scope, self.currentParams);
         rule._loaded = true;
       }
       if (rule.visit) {
-        rule.visit.call({data: options.data, env: self.cbarg}, options.data, self.cbarg);
+        rule.visit.call(options.scope, self.currentParams);
       }
     }
 
@@ -427,11 +487,28 @@ var Roux =
         nextName = rule._default;
       }
     }
+
+    /////////////////////// --------- NEXT RULE ----------  //////////////////////
+
     var nRule = self.getRuleByIdx(self.currentIdx+1); // get next rule
+    De&&bug("next rule", nRule);
+
+    var rouxId = "roux_" + nextName + "_in_" + self.getCurrentName();
+    var dataToTpl = {
+      rouxId: rouxId,
+      sel: '#' + rouxId,
+      params: self.currentParams,
+      tpls : {}
+    };
+
+    var nScope = new RouxScope(dataToTpl, self.env, nRule._evts);
+    De&&bug("next scope", nScope);
+
+    nRule._scope = nScope; // for "leave" event
 
     // redirect check
     if (typeof nRule.redirect == "function") {
-      var result = nRule.redirect.call({env: self.cbarg}, self.currentParams, self.cbarg);
+      var result = nRule.redirect.call(nScope, self.currentParams);
       if (result === false || result === undefined) {
         // no redirection
       }
@@ -447,14 +524,7 @@ var Roux =
     }
    
     // prepare id, data, urls for each template (css, partials, html)
-    var rouxId = "roux_" + nextName + "_in_" + self.getCurrentName();
 
-    var dataToTpl = {
-      rouxId: rouxId,
-      sel: '#' + rouxId,
-      params: self.currentParams,
-      tpls : {}
-    };
 
     var htmlURL = self.getResourceURL("html", nRule.html, self.viewPath);
     var cssURL  = self.getResourceURL("css", nRule.css, self.cssPath);
@@ -509,35 +579,13 @@ var Roux =
       setTimeout(function() { $d.call() }, 0);
     }
 
-    // // get JS
-    // // checking timing of event registration
-    // if (!self.gotResources[urls.js]) {
-    //   var div_id = 'jsevtcheck' + Math.random().toString().replace(".",""); 
-    //   var $d = umecob({name: "roux", tpl_id: urls.js, data: dataToTpl, divid: div_id});
-    //   $d.div_id = div_id;
-
-    //   $d.next(function(result) {
-    //     var i = 0, limit = 50, interval = 20;
-    //     var intervalID = window.setInterval(function() {
-    //       if (++i >= limit) window.clearInterval(intervalID);
-    //       var $div = $("div#" + $d.div_id);
-    //       if ($div.length) {
-    //         $div.remove();
-    //         if (!self.gotResources[urls.js] && result.match(rouxId)) eval(result);
-    //         self.gotResources[urls.js] = 1;
-    //         window.clearInterval(intervalID);
-    //       }
-    //     }, interval);
-    //   });
-    // }
-
     defaultContents[self.currentIdx] = roux.innerHTML; // set default contents
 
     // get HTML
     $d.next(function() {
       var getter = nRule.data, $data = null;
       if (getter instanceof Deferred) {
-        $data = getter.call({data: dataToTpl, env: self.cbarg}, dataToTpl, self.cbarg)
+        $data = getter.call(nScope, dataToTpl)
         .next(function(d) {
           for (var i in d) dataToTpl[i] = d[i];
           return dataToTpl;
@@ -546,15 +594,14 @@ var Roux =
       else {
         $data = dataToTpl;
         if (typeof getter == "function") {
-          var _d = getter.call({data: dataToTpl, env: self.cbarg}, dataToTpl, self.cbarg);
-          for (var i in _d) {
-            $data[i] = _d[i];
-          }
+          var _d = getter.call(nScope, dataToTpl);
+          for (var i in _d) $data[i] = _d[i];
         }
         else {
           for (var i in getter) $data[i] = getter[i];
         }
       }
+
       umecob({
         name   : "roux",
         tpl_id : htmlURL,
@@ -565,7 +612,7 @@ var Roux =
         var $sub = $('#' + rouxId + ' ' + self.selector);
         self.currentIdx++;
         De&&bug("get NEXT HTML=> getContents");
-        Methods.getContents($sub, {data: dataToTpl});
+        Methods.getContents($sub, {scope : nScope});
       })
       .error(function(e) {
         self.showNotFound("ajax error", e);
@@ -573,6 +620,9 @@ var Roux =
         delete self.rules[path];
         return;
       });
+    })
+    .error(function(e) {
+      self.showNotFound("error during data fetching", e);
     });
   };
 

@@ -45,9 +45,10 @@ var Roux =
   var bug = function() {
     var args = Array.prototype.slice.call(arguments);
     var name = args.shift();
-    if (!args.length) console.log(name);
-    args.forEach(function(arg) { console.log(name, arg) });
+    if (!args.length) console.log(bug.num++, name);
+    args.forEach(function(arg) { console.log(bug.num++, name, arg) });
   };
+  bug.num = 10000;
 
   var Deferred = umecob.Umecob.Deferred;
   var Publics  = {}; // public methods

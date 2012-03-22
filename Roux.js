@@ -531,7 +531,7 @@ var Roux =
 
     // get CSS
     if (!self.gotResources[cssURL]) {
-      umecob({name: "roux", tpl_id: cssURL, data: dataToTpl})
+      umecob({name: "roux", tpl_id: cssURL, data: nScope.data})
       .next(function(css) {
         var styletag = $("head>style");
         if (styletag.length) {
@@ -555,7 +555,7 @@ var Roux =
         var tplURL = Utils.addNoCacheParams(De, nRule.partials[name]);
 
         if (self.gotResources[tplURL]) {
-          dataToTpl.tpls[name]  = self.gotResources[tplURL];
+          nScope.data.tpls[name]  = self.gotResources[tplURL];
           if (--count == 0) setTimeout(function() { $d.call() }, 0);
         }
 
@@ -567,7 +567,7 @@ var Roux =
             if (--count == 0) $d.call();
           },
           success : function(tpl, type, xhr) {
-            dataToTpl.tpls[name]  = tpl;
+            nScope.data.tpls[name]  = tpl;
             self.gotResources[tplURL]  = tpl;
             if (--count == 0) $d.call();
             // De&&bug("template(" + tplURL +")", tpl)
@@ -585,16 +585,16 @@ var Roux =
     $d.next(function() {
       var getter = nRule.data, $data = null;
       if (getter instanceof Deferred) {
-        $data = getter.call(nScope, dataToTpl)
+        $data = getter.call(nScope, nScope.data)
         .next(function(d) {
-          for (var i in d) dataToTpl[i] = d[i];
-          return dataToTpl;
+          for (var i in d) nScope.data[i] = d[i];
+          return nScope.data;
         });
       }
       else {
-        $data = dataToTpl;
+        $data = nScope.data;
         if (typeof getter == "function") {
-          var _d = getter.call(nScope, dataToTpl);
+          var _d = getter.call(nScope, nScope.data);
           for (var i in _d) $data[i] = _d[i];
         }
         else {

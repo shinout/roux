@@ -29,8 +29,8 @@ var Roux =
       De&&bug("event is not registered", evtname);
       return;
     }
+    var self = this;
     if (async) {
-      var self = this;
       fnlist.forEach(function(fn) {
         setTimeout(function() { fn.apply(self, args) });
       });

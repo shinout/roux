@@ -502,10 +502,16 @@ var Roux =
       tpls : {}
     };
 
-    var nScope = new RouxScope(dataToTpl, self.env, nRule._evts);
+    if (nRule._scope) {
+      var nScope = nRule._scope;
+      nScope.data = dataToTpl;    // update data
+    }
+    else {
+      var nScope = new RouxScope(dataToTpl, self.env, nRule._evts);
+      nRule._scope = nScope; // for "leave" event
+    }
     De&&bug("next scope", nScope);
 
-    nRule._scope = nScope; // for "leave" event
 
     // redirect check
     if (typeof nRule.redirect == "function") {

@@ -246,6 +246,11 @@ var Roux =
       Publics.moveTo(page.path, page.params, {backward: true});
     }
 
+    // on before unload
+    window.onbeforeunload = function() {
+      Methods.emitLeave(self.currentIdx, 0, self.nodeNames);
+    };
+
 
     self.initialized = true;
 
@@ -305,16 +310,7 @@ var Roux =
     De&&bug("leaving ", prevIdx + " to " + self.currentIdx);
 
     // leave events
-    for (var i = prevIdx, l = self.currentIdx; i>l; i--) {
-      De&&bug("leaving", i);
-      // leave event!
-      var cRule = self.getRuleByIdx(i, prevNodeNames);
-      De&&bug("leaving rule", cRule);
-      var leave = cRule.leave;
-      if (leave) {
-        leave.call(cRule._scope, self.currentParams);
-      }
-    }
+    Methods.emitLeave(prevIdx, self.currentIdx, prevNodeNames);
 
     // when exactly matched to prev path
     // if ( isSameParam
@@ -411,6 +407,21 @@ var Roux =
   Methods.updateNodeNames = function(cpath) {
     self.nodeNames = Utils.getNodeNamesByPath(cpath, self.rootName);
   };
+
+  /**
+   * emit leave events
+   **/
+  Methods.emitLeave = function(i, l, nodeName) {
+    for (; i>l; i--) {
+      De&&bug("leaving", i);
+      // leave event!
+      var cRule = self.getRuleByIdx(i, nodeName);
+      De&&bug("leaving rule", cRule);
+      var leave = cRule.leave;
+      if (leave) leave.call(cRule._scope, self.currentParams);
+    }
+  };
+
 
   /**
    * make <body> visible 

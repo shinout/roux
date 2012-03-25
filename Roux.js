@@ -554,7 +554,7 @@ var Roux =
     // get partial templates
     var $d = new Deferred();
 
-    if (nRule.partials) {
+    if (nRule.partials && Object.keys(nRule.partials).length >= 1) {
       var partialNames = Object.keys(nRule.partials);
       var count = partialNames.length;
 

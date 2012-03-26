@@ -76,6 +76,7 @@ var Roux =
     gotResources    : {},          // already fetched resources 
     errorFlag       : null,        // error flag
     env             : null,        // value from $d
+    title           : 'Roux site',
 
     defaultContents : {},          // default contents. querystring => [contents1, contents2...]
     defaultState    : null,        // default state (path, params)
@@ -180,6 +181,9 @@ var Roux =
 
     // root name
     if (typeof options.rootName == 'string') self.rootName = options.rootName;
+
+    // title 
+    if (typeof options.title == 'string') self.title = options.title;
 
     var idx = rawPath.indexOf(self.basePath);
     if (self.basePath == "/") {
@@ -452,6 +456,14 @@ var Roux =
 
     var trans = options.trans;
     var rule = self.getRule();
+
+    // set title
+    if (typeof rule.title == "function") {
+      document.title = rule.title(self.title);
+    }
+    else if (rule.title) {
+      document.title = rule.title;
+    }
 
     // if getContents is called from getContents,
     De&&bug("options.scope", options.scope);

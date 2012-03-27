@@ -2,7 +2,27 @@
  * Roux
  **/
 var Roux =
-(function($, umecob) {
+(function(outerScope) {
+
+  var De = true;
+  var bug = function() {
+    var args = Array.prototype.slice.call(arguments);
+    var name = args.shift();
+    if (!args.length) console.log(bug.num++, name);
+    args.forEach(function(arg) { console.log(bug.num++, name, arg) });
+  };
+  bug.num = 10000;
+  var Publics  = {}; // public methods
+  var Methods  = {}; // private methods
+  var Utils    = {}; // utility functions
+
+
+  // if Node.js
+  if (typeof module == "object" && module.exports === outerScope) {
+    require(__dirname + '/roux.appcache')(Publics);
+    module.exports = Publics;
+  }
+
 
   function RouxScope(data, env, evts) {
     this.data  = data;
@@ -41,19 +61,8 @@ var Roux =
   };
 
 
-  var De = true;
-  var bug = function() {
-    var args = Array.prototype.slice.call(arguments);
-    var name = args.shift();
-    if (!args.length) console.log(bug.num++, name);
-    args.forEach(function(arg) { console.log(bug.num++, name, arg) });
-  };
-  bug.num = 10000;
 
   var Deferred = umecob.Umecob.Deferred;
-  var Publics  = {}; // public methods
-  var Methods  = {}; // private methods
-  var Utils    = {}; // utility functions
 
   var beforeInits = [];
 
@@ -77,6 +86,7 @@ var Roux =
     errorFlag       : null,        // error flag
     env             : null,        // value from $d
     title           : 'Roux site',
+    paths           : {},          // valid paths
 
     defaultContents : {},          // default contents. querystring => [contents1, contents2...]
     defaultState    : null,        // default state (path, params)
@@ -360,6 +370,8 @@ var Roux =
       'first you have to initialize Roux with Roux.init() before Roux.set()');
     Utils.assert(typeof path == 'string');
     path = Utils.getNodeNamesByPath(path).join('/'); // get joined path without nodeNames
+    self.paths[self.basePath + '/' + path] = true;
+
     switch (typeof obj) {
     case "object" : break;
     case "function":
@@ -404,6 +416,13 @@ var Roux =
     });
   };
 
+  Publics.getPaths = function() {
+    return Object.keys(self.paths);
+  };
+
+  Publics.getPartialPath = function() { return self.partialPath };
+  Publics.getViewPath    = function() { return self.viewPath    };
+  Publics.getCSSPath     = function() { return self.cssPath     };
 
   /**
    * set nodeNames (dep: currentPath)
@@ -877,4 +896,6 @@ var Roux =
   }
 
   return Publics;
-})(jQuery, umecob);
+})(this);
+
+

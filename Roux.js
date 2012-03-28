@@ -869,9 +869,14 @@ var Roux =
   /**
    * $.show
    **/
-  Utils.show = function($el) {
-    De&&bug("set visibility of roux VISIBLE");
-    $el.css("visibility", "visible");
+  Utils.show = function($els) {
+    De&&bug("set visibility of roux VISIBLE", $els);
+    $els.each(function(k, el) {
+      var $el = $(el);
+      if ($el.css("visibility") != "visible") {
+        $el.css("visibility", "visible").hide().fadeIn(400);
+      }
+    });
   };
 
   Utils.addNoCacheParams = function(debug, url) {

@@ -28,6 +28,11 @@ module.exports = function(Publics) {
     paths.forEach(function(path) {
       lines.push(path);
     });
+    if (options.qs) {
+      paths.forEach(function(path) {
+        lines.push(Roux.addNoCacheParams(path, options.qs));
+      });
+    }
     if (Array.isArray(options.network)) {
       lines.push("NETWORK:");
       options.network.forEach(function(path) {

@@ -91,6 +91,8 @@ var Roux =
     defaultContents : {},          // default contents. querystring => [contents1, contents2...]
     defaultState    : null,        // default state (path, params)
 
+    qs              : null,        // querystring to avoid caching
+
     // get current node name (dep: nodeNames)
     getCurrentName : function() {
       var ret = self.nodeNames[self.currentIdx]; 
@@ -120,9 +122,7 @@ var Roux =
       // Utils.assert(nextName);
       name = name || self.nodeNames.slice(1, self.currentIdx+1+1).join('/');
       var url = Utils.normalizePath(standardPath + '/' + name + '.' + type);
-      return Utils.addNoCacheParams(De, url);
-      if (De) url += "?" + new Date().getTime().toString();
-      // todo path parameter
+      return Publics.addNoCacheParams(url);
     },
 
     // get rule
@@ -172,6 +172,11 @@ var Roux =
     }
     Utils.assert(rawPath.indexOf(basePath) == 0);
     self.basePath = basePath;
+
+    // set querystring to avoid cache
+    if (options.qs) {
+      self.qs = options.qs;
+    }
 
     // resource paths
     ["viewPath", "cssPath", "partialPath"].forEach(function(subpath) {
@@ -424,6 +429,12 @@ var Roux =
   Publics.getViewPath    = function() { return self.viewPath    };
   Publics.getCSSPath     = function() { return self.cssPath     };
 
+  // set querystring to URL
+  Publics.addNoCacheParams = function(url, qs) {
+    if (!qs) qs = (self.qs) ? self.qs : new Date().getTime().toString();
+    return url + "?roux_cache_id=" + qs;
+  };
+
   /**
    * set nodeNames (dep: currentPath)
    **/
@@ -601,7 +612,7 @@ var Roux =
       var count = partialNames.length;
 
       partialNames.forEach(function(name) {
-        var tplURL = Utils.addNoCacheParams(De, nRule.partials[name]);
+        var tplURL = Publics.addNoCacheParams(nRule.partials[name] + ".html");
 
         if (self.gotResources[tplURL]) {
           nScope.data.tpls[name]  = self.gotResources[tplURL];
@@ -610,7 +621,7 @@ var Roux =
 
         $.ajax({
           dataType : "text",
-          url      : self.partialPath + "/" + tplURL + ".html",
+          url      : self.partialPath + "/" + tplURL,
           error : function() {
             De&&bug("ajax error", arguments);
             if (--count == 0) $d.call();
@@ -877,11 +888,6 @@ var Roux =
         $el.css("visibility", "visible").hide().fadeIn(400);
       }
     });
-  };
-
-  Utils.addNoCacheParams = function(debug, url) {
-    if (!debug) return url;
-    return url + "?" + new Date().getTime().toString();
   };
 
   /**

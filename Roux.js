@@ -65,12 +65,13 @@ var Roux =
   var Deferred = umecob.Umecob.Deferred;
 
   var beforeInits = [];
+  var base = location.href.replace("index.html", "");
 
   var self = {       // states (private properties) of this singleton object
-    basePath        : '/',         // root dir
-    viewPath        : '/views',    // resource root
-    cssPath         : '/css',      // css root
-    partialPath     : '/partials', // css root
+    basePath        : "/",        // root dir
+    viewPath        : 'views',    // resource root
+    cssPath         : 'css',      // css root
+    partialPath     : 'partials', // css root
     selector        : 'div.roux',  // selector for roux tags
     rouxLink        : 'a.rxlink',  // selector for roux tags
     rootName        : 'root',      // name of the root node
@@ -117,11 +118,12 @@ var Roux =
     },
 
     // get URL by type (dep: nodeNames)
-    getResourceURL : function(type, name, standardPath) {
+    getResourceURL : function(type, name, standardPath, cache) {
       // var nextName = self.getNextName();
       // Utils.assert(nextName);
       name = name || self.nodeNames.slice(1, self.currentIdx+1+1).join('/');
       var url = Utils.normalizePath(standardPath + '/' + name + '.' + type);
+      if (cache) return url;
       return Publics.addNoCacheParams(url);
     },
 
@@ -158,7 +160,7 @@ var Roux =
       $('body').css("visibility", "hidden")
     });
 
-    var rawPath = location.pathname;
+    var rawPath = location.pathname + location.hash;
     options || (options = {});
     De = options.debug;
     De && setInterval(function(){ console.log(".") }, 2000);
@@ -190,7 +192,6 @@ var Roux =
       self[subpath] = Utils.normalizePath(options[subpath]);
     });
 
-
     // selector
     if (typeof options.selector == 'string') self.selector = options.selector;
 
@@ -200,14 +201,21 @@ var Roux =
     // title 
     if (typeof options.title == 'string') self.title = options.title;
 
+    // title 
+    if (typeof options.pathSeparator == 'string') self.pathSeparator = options.pathSeparator;
+
     var idx = rawPath.indexOf(self.basePath);
     if (self.basePath == "/") {
       var currentPath = rawPath;
     }
     else {
       var currentPath = (idx == -1) ? "/" : rawPath.slice(idx+self.basePath.length);
+      // if (currentPath[currentPath.length-1] != "/") {
+      //   currentPath += "/";
+      // }
     }
 
+    De&&bug("base path", self.basePath);
     De&&bug("first currentPath", currentPath);
 
     // node names
@@ -283,6 +291,12 @@ var Roux =
   };
 
 
+  Publics.setResources = function(data) {
+    for (var i in data) {
+      self.gotResources[i] = data[i];
+    }
+  };
+
   /**
    * move to the given cpath (cpath: path from basePath)
    **/
@@ -339,6 +353,10 @@ var Roux =
     // }
 
 
+    // change path separator
+    if (self.pathSeparator) {
+      cpath = cpath.split("/").join(self.pathSeparator);
+    }
     // save previous state
     if (!options.backward) {
       var funcname = (options.replace) ? 'replaceState' : 'pushState';
@@ -586,8 +604,8 @@ var Roux =
     // prepare id, data, urls for each template (css, partials, html)
 
 
-    var htmlURL = self.getResourceURL("html", nRule.html, self.viewPath);
-    var cssURL  = self.getResourceURL("css", nRule.css, self.cssPath);
+    var htmlURL = self.getResourceURL("html", nRule.html, self.viewPath, "cache");
+    var cssURL  = self.getResourceURL("css", nRule.css, self.cssPath, "cache");
 
     // get CSS
     if (!self.gotResources[cssURL]) {
@@ -599,9 +617,13 @@ var Roux =
         }
         else {
           if (!self.gotResources[cssURL]) $("head").append('<style>'+ css +'</style>');
-          self.gotResources[cssURL] = 1;
+          self.gotResources[cssURL] = 1; // loaded
         }
       });
+    } else if (self.gotResources[cssURL] !== 1) { // got, but not loaded
+      var cssData = umecob({name: "roux", tpl: self.gotResources[cssURL], data: nScope.data, sync: true})
+      $("head").append('<style>'+ cssData +'</style>');
+      self.gotResources[cssURL] = 1; // loaded
     }
 
     // get partial templates
@@ -662,12 +684,14 @@ var Roux =
         }
       }
 
-      umecob({
+      var umecobParam = {
         name   : "roux",
-        tpl_id : htmlURL,
         data   : $data
-      })
-      .next(function(html) {
+      };
+      if (self.gotResources[htmlURL]) umecobParam.tpl = self.gotResources[htmlURL];
+      else umecobParam.tpl_id = htmlURL;
+
+      umecob(umecobParam).next(function(html) {
         $roux.html(Utils.getDivStr(rouxId, html));
         var $sub = $('#' + rouxId + ' ' + self.selector);
         self.currentIdx++;
@@ -895,7 +919,7 @@ var Roux =
    **/
   Utils.getNodeNamesByPath = function(cpath, rootName) {
     cpath = Utils.normalizePath(cpath);
-    Utils.assert(cpath.charAt(0) == '/');
+    Utils.assert(self.pathSeparator || cpath.charAt(0) == '/');
     var nodeNames = cpath.slice(1).split('/').filter(function(v) { return v.trim().length });
     if (rootName != null) nodeNames.unshift(rootName);
 

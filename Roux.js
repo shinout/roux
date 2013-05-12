@@ -65,7 +65,6 @@ var Roux =
   var Deferred = umecob.Umecob.Deferred;
 
   var beforeInits = [];
-  var base = location.href.replace("index.html", "");
 
   var self = {       // states (private properties) of this singleton object
     basePath        : "/",        // root dir

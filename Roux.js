@@ -69,9 +69,9 @@ var Roux =
 
   var self = {       // states (private properties) of this singleton object
     basePath        : "/",        // root dir
-    viewPath        : 'views',    // resource root
-    cssPath         : 'css',      // css root
-    partialPath     : 'partials', // css root
+    viewPath        : '/views',    // resource root
+    cssPath         : '/css',      // css root
+    partialPath     : '/partials', // css root
     selector        : 'div.roux',  // selector for roux tags
     rouxLink        : 'a.rxlink',  // selector for roux tags
     rootName        : 'root',      // name of the root node

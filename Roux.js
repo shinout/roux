@@ -633,23 +633,24 @@ var Roux =
       var count = partialNames.length;
 
       partialNames.forEach(function(name) {
-        var tplURL = Publics.addNoCacheParams(nRule.partials[name] + ".html");
+        var partialURL = self.getResourceURL("html", nRule.partials[name], self.partialPath, "cache");
 
-        if (self.gotResources[tplURL]) {
-          nScope.data.tpls[name]  = self.gotResources[tplURL];
+        if (self.gotResources[partialURL]) {
+          nScope.data.tpls[name]  = self.gotResources[partialURL];
           if (--count == 0) setTimeout(function() { $d.call() }, 0);
+          return;
         }
 
         $.ajax({
           dataType : "text",
-          url      : self.partialPath + "/" + tplURL,
+          url      : partialURL,
           error : function() {
             De&&bug("ajax error", arguments);
             if (--count == 0) $d.call();
           },
           success : function(tpl, type, xhr) {
             nScope.data.tpls[name]  = tpl;
-            self.gotResources[tplURL]  = tpl;
+            self.gotResources[partialURL]  = tpl;
             if (--count == 0) $d.call();
             // De&&bug("template(" + tplURL +")", tpl)
           }

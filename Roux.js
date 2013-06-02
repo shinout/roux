@@ -607,7 +607,7 @@ var Roux =
     var cssURL  = self.getResourceURL("css", nRule.css, self.cssPath, "cache");
 
     // get CSS
-    if (!self.gotResources[cssURL]) {
+    if (self.gotResources[cssURL] == null) {
       umecob({name: "roux", tpl_id: cssURL, data: nScope.data})
       .next(function(css) {
         var styletag = $("head>style");
@@ -615,7 +615,7 @@ var Roux =
           styletag.append(css);
         }
         else {
-          if (!self.gotResources[cssURL]) $("head").append('<style>'+ css +'</style>');
+          if (self.gotResources[cssURL] == null) $("head").append('<style>'+ css +'</style>');
           self.gotResources[cssURL] = 1; // loaded
         }
       });
@@ -635,7 +635,7 @@ var Roux =
       partialNames.forEach(function(name) {
         var partialURL = self.getResourceURL("html", nRule.partials[name], self.partialPath, "cache");
 
-        if (self.gotResources[partialURL]) {
+        if (self.gotResources[partialURL] != null) {
           nScope.data.tpls[name]  = self.gotResources[partialURL];
           if (--count == 0) setTimeout(function() { $d.call() }, 0);
           return;
@@ -688,7 +688,7 @@ var Roux =
         name   : "roux",
         data   : $data
       };
-      if (self.gotResources[htmlURL]) umecobParam.tpl = self.gotResources[htmlURL];
+      if (self.gotResources[htmlURL] != null) umecobParam.tpl = self.gotResources[htmlURL];
       else umecobParam.tpl_id = htmlURL;
 
       umecob(umecobParam).next(function(html) {

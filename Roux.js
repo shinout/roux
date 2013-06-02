@@ -313,7 +313,8 @@ var Roux =
     cpath = Utils.normalizePath(cpath);
 
     // if relative path
-    if (cpath.charAt(0) != '/') cpath = Utils.normalizePath(self.getCurrentDir() + '/' + cpath);
+    var sep = self.pathSeparator || "/";
+    if (cpath.charAt(0) != sep) cpath = Utils.normalizePath(self.getCurrentDir() + '/' + cpath);
 
     // if errorFlag, redirect
     if (self.errorFlag) {

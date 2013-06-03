@@ -200,7 +200,7 @@ var Roux =
     // title 
     if (typeof options.title == 'string') self.title = options.title;
 
-    // title 
+    // path separator
     if (typeof options.pathSeparator == 'string') self.pathSeparator = options.pathSeparator;
 
     var idx = rawPath.indexOf(self.basePath);
@@ -212,6 +212,9 @@ var Roux =
       // if (currentPath[currentPath.length-1] != "/") {
       //   currentPath += "/";
       // }
+    }
+    if (self.pathSeparator == currentPath[0]) {
+      currentPath[0] = "/";
     }
 
     De&&bug("base path", self.basePath);
@@ -313,8 +316,7 @@ var Roux =
     cpath = Utils.normalizePath(cpath);
 
     // if relative path
-    // var sep = self.pathSeparator || "/";
-    // if (cpath.charAt(0) != sep) cpath = Utils.normalizePath(self.getCurrentDir() + '/' + cpath);
+    if (cpath.charAt(0) != "/") cpath = Utils.normalizePath(self.getCurrentDir() + '/' + cpath);
 
     // if errorFlag, redirect
     if (self.errorFlag) {
@@ -353,10 +355,6 @@ var Roux =
     // }
 
 
-    // change path separator
-    if (self.pathSeparator) {
-      cpath = cpath.split("/").join(self.pathSeparator);
-    }
     // save previous state
     if (!options.backward) {
       var funcname = (options.replace) ? 'replaceState' : 'pushState';
@@ -776,7 +774,8 @@ var Roux =
   Utils.getURLByPaths = function(bpath, cpath, params) {
     var query = Utils.getQuery(params);
     if (query) query = '?' + query;
-    return Utils.normalizePath(bpath + cpath + query);
+    var sep = self.pathSeparator || "/";
+    return bpath + sep + cpath.slice(1) + query;
   }
 
 
@@ -920,7 +919,6 @@ var Roux =
    **/
   Utils.getNodeNamesByPath = function(cpath, rootName) {
     cpath = Utils.normalizePath(cpath);
-    Utils.assert(self.pathSeparator || cpath.charAt(0) == '/');
     var nodeNames = cpath.slice(1).split('/').filter(function(v) { return v.trim().length });
     if (rootName != null) nodeNames.unshift(rootName);
 

@@ -619,8 +619,10 @@ var Roux =
         }
       });
     } else if (self.gotResources[cssURL] !== 1) { // got, but not loaded
-      var cssData = umecob({name: "roux", tpl: self.gotResources[cssURL], data: nScope.data, sync: true})
-      $("head").append('<style>'+ cssData +'</style>');
+      if (self.gotResources[cssURL] != "") {
+        var cssData = umecob({name: "roux", tpl: self.gotResources[cssURL], data: nScope.data, sync: true})
+        $("head").append('<style>'+ cssData +'</style>');
+      }
       self.gotResources[cssURL] = 1; // loaded
     }
 
@@ -687,7 +689,7 @@ var Roux =
         name   : "roux",
         data   : $data
       };
-      if (self.gotResources[htmlURL] != null) umecobParam.tpl = self.gotResources[htmlURL];
+      if (self.gotResources[htmlURL] != null) umecobParam.tpl = self.gotResources[htmlURL] || " ";
       else umecobParam.tpl_id = htmlURL;
 
       umecob(umecobParam).next(function(html) {

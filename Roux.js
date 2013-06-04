@@ -82,7 +82,7 @@ var Roux =
     rules           : {},          // rule of fetching resources and data
     firstView       : true,        // when first view, true
     initialized     : false,       // initialized or not
-    gotResources    : {},          // already fetched resources 
+    gotResources    : {EMPTY: 1},  // already fetched resources 
     errorFlag       : null,        // error flag
     env             : null,        // value from $d
     title           : 'Roux site',
@@ -117,7 +117,8 @@ var Roux =
     },
 
     // get URL by type (dep: nodeNames)
-    getResourceURL : function(type, name, standardPath, cache) {
+    getResourceURL : function(type, name, standardPath, nRule, cache) {
+      if (nRule[type] === false) return "EMPTY";
       // var nextName = self.getNextName();
       // Utils.assert(nextName);
       name = name || self.nodeNames.slice(1, self.currentIdx+1+1).join('/');
@@ -408,7 +409,7 @@ var Roux =
     });
 
     ['css', 'html'].forEach(function(name) {
-      if (typeof obj[name] == "string") rule[name] = obj[name];
+      rule[name] = obj[name];
       delete obj[name];
     });
 
@@ -602,8 +603,8 @@ var Roux =
     // prepare id, data, urls for each template (css, partials, html)
 
 
-    var htmlURL = self.getResourceURL("html", nRule.html, self.viewPath, "cache");
-    var cssURL  = self.getResourceURL("css", nRule.css, self.cssPath, "cache");
+    var htmlURL = self.getResourceURL("html", nRule.html, self.viewPath, nRule, "cache");
+    var cssURL  = self.getResourceURL("css", nRule.css, self.cssPath, nRule, "cache");
 
     // get CSS
     if (self.gotResources[cssURL] == null) {
@@ -634,7 +635,7 @@ var Roux =
       var count = partialNames.length;
 
       partialNames.forEach(function(name) {
-        var partialURL = self.getResourceURL("html", nRule.partials[name], self.partialPath, "cache");
+        var partialURL = self.getResourceURL("html", nRule.partials[name], self.partialPath, nRule, "cache");
 
         if (self.gotResources[partialURL] != null) {
           nScope.data.tpls[name]  = self.gotResources[partialURL];

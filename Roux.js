@@ -610,19 +610,19 @@ var Roux =
     if (self.gotResources[cssURL] == null) {
       umecob({name: "roux", tpl_id: cssURL, data: nScope.data})
       .next(function(css) {
-        var styletag = $("head>style");
+        var styletag = $("style#roux_style");
         if (styletag.length) {
           styletag.append(css);
         }
         else {
-          if (self.gotResources[cssURL] == null) $("head").append('<style>'+ css +'</style>');
+          if (self.gotResources[cssURL] == null) $("head").append('<style id="roux_style">'+ css +'</style>');
           self.gotResources[cssURL] = 1; // loaded
         }
       });
     } else if (self.gotResources[cssURL] !== 1) { // got, but not loaded
       if (self.gotResources[cssURL] != "") {
         var cssData = umecob({name: "roux", tpl: self.gotResources[cssURL], data: nScope.data, sync: true})
-        $("head").append('<style>'+ cssData +'</style>');
+        $("head").append('<style id="roux_style">'+ cssData +'</style>');
       }
       self.gotResources[cssURL] = 1; // loaded
     }

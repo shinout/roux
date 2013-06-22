@@ -278,7 +278,17 @@ var Roux =
 
     // on before unload
     window.onbeforeunload = function() {
-      Methods.emitLeave(self.currentIdx, 0, self.nodeNames);
+      var i = self.currentIdx;
+      var nodeName = self.nodeNames;
+      var msg = '';
+      for (; i>0; i--) {
+        De&&bug("beforeunload", i);
+        // leave event!
+        var cRule = self.getRuleByIdx(i, nodeName);
+        var fn = cRule.beforeunload;
+        if (fn) msg = fn.call(cRule._scope, self.currentParams, msg);
+      }
+      if (msg) return msg;
     };
 
 
@@ -403,7 +413,7 @@ var Roux =
       return;
     }
     var rule = self.getRule(path);
-    ['data', 'redirect', 'load', 'visit', 'leave'].forEach(function(name) {
+    ['data', 'redirect', 'load', 'visit', 'leave', 'beforeunload'].forEach(function(name) {
       if (typeof obj[name] == "function") rule[name] = obj[name];
       delete obj[name];
     });
